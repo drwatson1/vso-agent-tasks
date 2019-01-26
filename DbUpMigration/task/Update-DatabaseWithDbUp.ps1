@@ -16,7 +16,12 @@ function Get-DllPaths {
     return $paths
 }
 
-$dllPaths = @(Get-DllPaths)
+function Get-DllPaths2 {
+    $paths += Resolve-Path (Join-Path $PSScriptRoot 'lib\dbup*\lib\net35\*.dll')
+    return $paths
+}
+
+$dllPaths = @(Get-DllPaths2)
 $dllPaths | ForEach-Object {
     Add-Type -Path $_
 }
