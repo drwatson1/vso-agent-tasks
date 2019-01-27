@@ -8,10 +8,10 @@ function Get-DllPaths {
     $dllFilePattern = Join-Path $workingDir $pattern
     $paths = @()
     if ((Test-Path $dllFilePattern)) {
-        $paths += Resolve-Path $dllFilePattern
+        $paths += Resolve-Path $dllFilePattern | Select-Object -ExpandProperty Path -First 1
     }
     else {
-        $paths += Resolve-Path (Join-Path $PSScriptRoot "lib\$pattern")
+        $paths += Resolve-Path (Join-Path $PSScriptRoot "lib\$pattern") | Select-Object -ExpandProperty Path -First 1
     }
     return $paths
 }
@@ -64,6 +64,7 @@ using System.Linq;
 using System.Text;
 using DbUp.Engine;
 using DbUp.Engine.Transactions;
+using DbUp.Support;
 
 public enum FileSearchOrder
 {
@@ -122,7 +123,12 @@ public class FileSystemScriptProvider : IScriptProvider
         {
             infos = infos.OrderBy(i => i.FullName);
         }
-        return infos.Select(i => SqlScriptFromFile(i)).ToArray();
+        var scripts = infos.Select(i => SqlScriptFromFile(i)).ToArray();
+        for(int i = 0;i < scripts.Length; ++i)
+        {
+            scripts[i].SqlScriptOptions.RunGroupOrder = i;
+        }
+        return scripts;
     }
 
     private SqlScript SqlScriptFromFile(FileInfo file)
@@ -130,7 +136,12 @@ public class FileSystemScriptProvider : IScriptProvider
         using (FileStream fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read))
         {
             var fileName = file.FullName.Substring(directoryPath.Length + 1);
-            return SqlScript.FromStream(fileName, fileStream, encoding);
+            var options = new SqlScriptOptions()
+            {
+                ScriptType = ScriptType.RunOnce,
+                RunGroupOrder = 0
+            };
+            return SqlScript.FromStream(fileName, fileStream, encoding, options);
         }
     }
 
