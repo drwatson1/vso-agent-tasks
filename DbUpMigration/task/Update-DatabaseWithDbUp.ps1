@@ -5,13 +5,13 @@ function Get-TempDir {
 function Get-DllPaths {
     $workingDir = Join-Path (Get-TempDir) 'DatabaseMigration'
     $pattern = 'dbup*\lib\net35\*.dll'
-    $dllFilePattern = Join-Path $workingDir $pattern
     $paths = @()
-    if ((Test-Path $dllFilePattern)) {
-        $paths += Resolve-Path $dllFilePattern | Select-Object -ExpandProperty Path -First 1
+
+    if ((Test-Path (Join-Path $workingDir $pattern))) {
+        $paths = Get-Item (Join-Path $workingDir $pattern) | Select-Object -ExpandProperty FullName
     }
     else {
-        $paths += Resolve-Path (Join-Path $PSScriptRoot "lib\$pattern") | Select-Object -ExpandProperty Path -First 1
+        $paths = Get-Item (Join-Path $PSScriptRoot "lib\$pattern") | Select-Object -ExpandProperty FullName
     }
     return $paths
 }
